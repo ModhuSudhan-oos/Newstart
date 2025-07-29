@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SaaS Tools Directory</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div class="flex h-screen">
+        <aside class="bg-gray-800 dark:bg-gray-900 text-white w-64 p-6 space-y-6 flex flex-col">
+            <div class="text-2xl font-bold mb-8">Admin Panel</div>
+            <nav class="space-y-4 flex-grow">
+                <a href="/admin.html" class="flex items-center space-x-2 p-2 rounded-md bg-blue-700 dark:bg-blue-600">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/admin-tools.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-tools"></i>
+                    <span>Manage Tools</span>
+                </a>
+                <a href="/admin-categories.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-th-list"></i>
+                    <span>Manage Categories</span>
+                </a>
+                <a href="/admin-blog.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-blog"></i>
+                    <span>Manage Blog</span>
+                </a>
+                <a href="/admin-faqs.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Manage FAQs</span>
+                </a>
+                <a href="/analytics.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="/team.html" id="teamManagementLink" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600" style="display:none;">
+                    <i class="fas fa-users"></i>
+                    <span>Team Members</span>
+                </a>
+            </nav>
+            <button id="adminLogoutBtn" class="w-full flex items-center justify-center space-x-2 p-2 rounded-md bg-red-600 hover:bg-red-700 mt-auto">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-y-auto">
+            <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Admin Dashboard</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Total Tools</h2>
+                        <p id="totalTools" class="text-4xl font-bold text-blue-600 dark:text-blue-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-tools text-5xl text-blue-300 dark:text-blue-700 opacity-50"></i>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Approved Tools</h2>
+                        <p id="approvedTools" class="text-4xl font-bold text-green-600 dark:text-green-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-check-circle text-5xl text-green-300 dark:text-green-700 opacity-50"></i>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Pending Tools</h2>
+                        <p id="pendingTools" class="text-4xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-hourglass-half text-5xl text-yellow-300 dark:text-yellow-700 opacity-50"></i>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Total Categories</h2>
+                        <p id="totalCategories" class="text-4xl font-bold text-purple-600 dark:text-purple-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-th-list text-5xl text-purple-300 dark:text-purple-700 opacity-50"></i>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Total Subscribers</h2>
+                        <p id="totalSubscribers" class="text-4xl font-bold text-cyan-600 dark:text-cyan-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-users text-5xl text-cyan-300 dark:text-cyan-700 opacity-50"></i>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Total Site Views</h2>
+                        <p id="totalSiteViews" class="text-4xl font-bold text-orange-600 dark:text-orange-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-eye text-5xl text-orange-300 dark:text-orange-700 opacity-50"></i>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Total Site Clicks</h2>
+                        <p id="totalSiteClicks" class="text-4xl font-bold text-teal-600 dark:text-teal-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-hand-pointer text-5xl text-teal-300 dark:text-teal-700 opacity-50"></i>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Total Blog Posts</h2>
+                        <p id="totalBlogPosts" class="text-4xl font-bold text-red-600 dark:text-red-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-file-alt text-5xl text-red-300 dark:text-red-700 opacity-50"></i>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Total FAQs</h2>
+                        <p id="totalFaqs" class="text-4xl font-bold text-gray-600 dark:text-gray-400 mt-2">0</p>
+                    </div>
+                    <i class="fas fa-question text-5xl text-gray-300 dark:text-gray-700 opacity-50"></i>
+                </div>
+            </div>
+
+            <div id="dashboardLoading" class="text-center text-xl font-semibold text-gray-700 dark:text-gray-300 mt-16">
+                <i class="fas fa-spinner fa-spin mr-2"></i> Loading dashboard data...
+            </div>
+            <div id="dashboardError" class="hidden text-center text-red-500 mt-8">
+                <p><i class="fas fa-exclamation-circle mr-2"></i> Failed to load dashboard data. Please check your internet connection or Firebase configuration/rules.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firestore.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-script.js"></script>
+    <script src="js/seo-meta.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            setSeoMetaData('admin-dashboard', "Admin Dashboard - SaaS Tools Directory", "Manage your SaaS tools directory content.", "admin, dashboard, SaaS, tools");
+
+            // Ensure user is authenticated and has admin role before loading dashboard data
+            // checkAuthAndRedirect will handle redirection if not authorized
+            const isAuthorized = await checkAuthAndRedirect(['editor', 'superAdmin'], '/login.html');
+            if (!isAuthorized) {
+                return; // Stop execution if not authorized
+            }
+
+            const dashboardLoadingEl = document.getElementById('dashboardLoading');
+            const dashboardErrorEl = document.getElementById('dashboardError');
+
+            const totalToolsEl = document.getElementById('totalTools');
+            const approvedToolsEl = document.getElementById('approvedTools');
+            const pendingToolsEl = document.getElementById('pendingTools');
+            const totalCategoriesEl = document.getElementById('totalCategories');
+            const totalSubscribersEl = document.getElementById('totalSubscribers');
+            const totalSiteViewsEl = document.getElementById('totalSiteViews');
+            const totalSiteClicksEl = document.getElementById('totalSiteClicks');
+            const totalBlogPostsEl = document.getElementById('totalBlogPosts');
+            const totalFaqsEl = document.getElementById('totalFaqs');
+
+            async function loadDashboardData() {
+                dashboardLoadingEl.classList.remove('hidden');
+                dashboardErrorEl.classList.add('hidden');
+
+                try {
+                    // Fetch all tools
+                    const allTools = await getAllDocuments('tools');
+                    totalToolsEl.textContent = allTools.length;
+                    approvedToolsEl.textContent = allTools.filter(tool => tool.isApproved).length;
+                    pendingToolsEl.textContent = allTools.filter(tool => !tool.isApproved).length;
+
+                    // Fetch categories
+                    const categories = await getAllDocuments('categories');
+                    totalCategoriesEl.textContent = categories.length;
+
+                    // Fetch subscribers
+                    const subscribers = await getAllDocuments('subscribers');
+                    totalSubscribersEl.textContent = subscribers.length;
+
+                    // Fetch site metrics (views and clicks)
+                    const siteMetricsDoc = await getDocumentById('siteMetrics', 'overview');
+                    totalSiteViewsEl.textContent = siteMetricsDoc ? (siteMetricsDoc.totalViews || 0) : 0;
+                    totalSiteClicksEl.textContent = siteMetricsDoc ? (siteMetricsDoc.totalClicks || 0) : 0;
+
+                    // Fetch blog posts
+                    const blogPosts = await getAllDocuments('blogPosts');
+                    totalBlogPostsEl.textContent = blogPosts.length;
+
+                    // Fetch FAQs
+                    const faqs = await getAllDocuments('faqs');
+                    totalFaqsEl.textContent = faqs.length;
+
+                    dashboardLoadingEl.classList.add('hidden');
+                } catch (error) {
+                    console.error("Error loading dashboard data:", error);
+                    dashboardLoadingEl.classList.add('hidden');
+                    dashboardErrorEl.classList.remove('hidden');
+                }
+            }
+
+            loadDashboardData();
+        });
+    </script>
+</body>
+</html>
