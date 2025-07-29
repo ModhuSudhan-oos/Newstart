@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Team Members - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div class="flex h-screen">
+        <aside class="bg-gray-800 dark:bg-gray-900 text-white w-64 p-6 space-y-6 flex flex-col">
+            <div class="text-2xl font-bold mb-8">Admin Panel</div>
+            <nav class="space-y-4 flex-grow">
+                <a href="/admin.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/admin-tools.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-tools"></i>
+                    <span>Manage Tools</span>
+                </a>
+                <a href="/admin-categories.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-th-list"></i>
+                    <span>Manage Categories</span>
+                </a>
+                <a href="/admin-blog.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-blog"></i>
+                    <span>Manage Blog</span>
+                </a>
+                <a href="/admin-faqs.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Manage FAQs</span>
+                </a>
+                <a href="/analytics.html" class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-600">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="/team.html" id="teamManagementLink" class="flex items-center space-x-2 p-2 rounded-md bg-blue-700 dark:bg-blue-600">
+                    <i class="fas fa-users"></i>
+                    <span>Team Members</span>
+                </a>
+            </nav>
+            <button id="adminLogoutBtn" class="w-full flex items-center justify-center space-x-2 p-2 rounded-md bg-red-600 hover:bg-red-700 mt-auto">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-y-auto">
+            <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">Manage Team Members</h1>
+            
+            <button id="addMemberBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md mb-6">
+                Add New Member
+            </button>
+
+            <div id="memberFormContainer" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg mb-8 hidden">
+                <h2 id="formTitle" class="text-2xl font-bold text-gray-800 dark:text-white mb-4">Add New Member</h2>
+                <form id="memberForm" class="space-y-4">
+                    <input type="hidden" id="memberId">
+                    <div>
+                        <label for="memberEmail" class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Email</label>
+                        <input type="email" id="memberEmail" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="memberPassword" class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Password (for new members)</label>
+                        <input type="password" id="memberPassword" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Leave blank to keep current password if editing.</p>
+                    </div>
+                    <div>
+                        <label for="memberRole" class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Role</label>
+                        <select id="memberRole" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            <option value="editor">Editor</option>
+                            <option value="superAdmin">Super Admin</option>
+                        </select>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button type="submit" id="saveMemberBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">Save Member</button>
+                        <button type="button" id="cancelMemberBtn" class="bg-gray-400 hover:bg-gray-500 text-gray-800 font-bold py-2 px-4 rounded-md">Cancel</button>
+                    </div>
+                    <p id="formMessage" class="mt-4 text-center text-sm"></p>
+                </form>
+            </div>
+
+            <div id="memberListContainer" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">Existing Members</h2>
+                <div id="membersTable" class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Login</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i> Loading members...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p id="membersError" class="hidden text-center text-red-500 mt-4">Failed to load team members.</p>
+                <p id="noMembersFound" class="hidden text-center text-gray-600 dark:text-gray-400 mt-4">No team members found.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firestore.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-script.js"></script>
+    <script src="js/seo-meta.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            setSeoMetaData('admin-team', "Manage Team Members - Admin", "Manage admin and editor accounts for the SaaS Tools Directory.", "admin, team, users, roles");
+
+            // Ensure user is superAdmin before proceeding
+            const isAuthorized = await checkAuthAndRedirect(['superAdmin'], '/admin.html');
+            if (!isAuthorized) {
+                return; // Stop execution if not authorized
+            }
+
+            const addMemberBtn = document.getElementById('addMemberBtn');
+            const memberFormContainer = document.getElementById('memberFormContainer');
+            const memberForm = document.getElementById('memberForm');
+            const formTitle = document.getElementById('formTitle');
+            const memberIdInput = document.getElementById('memberId');
+            const memberEmailInput = document.getElementById('memberEmail');
+            const memberPasswordInput = document.getElementById('memberPassword');
+            const memberRoleSelect = document.getElementById('memberRole');
+            const saveMemberBtn = document.getElementById('saveMemberBtn');
+            const cancelMemberBtn = document.getElementById('cancelMemberBtn');
+            const formMessage = document.getElementById('formMessage');
+            const membersTableBody = document.getElementById('membersTableBody');
+            const membersError = document.getElementById('membersError');
+            const noMembersFound = document.getElementById('noMembersFound');
+
+            // --- Show/Hide Form ---
+            function showForm(title, member = null) {
+                formTitle.textContent = title;
+                formMessage.textContent = '';
+                memberForm.reset();
+                memberPasswordInput.required = true; // Password required for new members
+                memberEmailInput.disabled = false; // Email editable for new members
+
+                if (member) {
+                    memberIdInput.value = member.id;
+                    memberEmailInput.value = member.email;
+                    memberEmailInput.disabled = true; // Email not editable when editing existing member
+                    memberRoleSelect.value = member.role;
+                    memberPasswordInput.required = false; // Password not required when editing
+                } else {
+                    memberIdInput.value = '';
+                }
+                memberFormContainer.classList.remove('hidden');
+            }
+
+            function hideForm() {
+                memberFormContainer.classList.add('hidden');
+            }
+
+            addMemberBtn.addEventListener('click', () => showForm('Add New Member'));
+            cancelMemberBtn.addEventListener('click', hideForm);
+
+            // --- Load Members ---
+            async function loadMembers() {
+                membersTableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i> Loading members...</td></tr>';
+                membersError.classList.add('hidden');
+                noMembersFound.classList.add('hidden');
+
+                try {
+                    const members = await getAllDocuments('adminUsers');
+                    membersTableBody.innerHTML = ''; // Clear loading message
+
+                    if (members.length === 0) {
+                        noMembersFound.classList.remove('hidden');
+                        return;
+                    }
+
+                    members.forEach(member => {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+                        const lastLogin = member.lastLogin ? new Date(member.lastLogin.toDate()).toLocaleString() : 'N/A';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-200">${member.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${member.role}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${lastLogin}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button data-id="${member.id}" data-email="${member.email}" data-role="${member.role}" class="edit-btn text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                <button data-id="${member.id}" class="delete-btn text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        `;
+                        membersTableBody.appendChild(row);
+                    });
+
+                    // Add event listeners for edit/delete buttons
+                    membersTableBody.querySelectorAll('.edit-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const id = e.target.dataset.id;
+                            const email = e.target.dataset.email;
+                            const role = e.target.dataset.role;
+                            showForm('Edit Member', { id, email, role });
+                        });
+                    });
+
+                    membersTableBody.querySelectorAll('.delete-btn').forEach(button => {
+                        button.addEventListener('click', async (e) => {
+                            const id = e.target.dataset.id;
+                            if (confirm('Are you sure you want to delete this team member? This will remove their admin access.')) {
+                                try {
+                                    // First, delete the user from Firebase Authentication
+                                    // NOTE: Deleting users directly from client-side is NOT recommended for production.
+                                    // Use Firebase Admin SDK (Cloud Functions) for secure user deletion.
+                                    // For now, we'll just delete the Firestore record,
+                                    // and manually delete from Firebase Auth if needed.
+                                    await deleteDocument('adminUsers', id);
+                                    alert('Team member removed successfully. Remember to delete user from Firebase Authentication if needed.');
+                                    loadMembers(); // Reload list
+                                } catch (error) {
+                                    console.error("Error deleting member:", error);
+                                    alert("Failed to delete member: " + error.message);
+                                }
+                            }
+                        });
+                    });
+
+                } catch (error) {
+                    console.error("Error loading members:", error);
+                    membersTableBody.innerHTML = '';
+                    membersError.classList.remove('hidden');
+                }
+            }
+
+            // --- Add/Edit Member Form Submission ---
+            memberForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const id = memberIdInput.value;
+                const email = memberEmailInput.value;
+                const password = memberPasswordInput.value;
+                const role = memberRoleSelect.value;
+
+                formMessage.textContent = '';
+                saveMemberBtn.disabled = true;
+                saveMemberBtn.textContent = 'Saving...';
+
+                try {
+                    if (id) { // Editing existing member
+                        await updateDocument('adminUsers', id, { role: role });
+                        // Password change for existing user via client-side Auth is complex and insecure.
+                        // Ideally, users reset their own passwords, or SuperAdmin uses Firebase Admin SDK (Cloud Function).
+                        if (password) {
+                            alert("Password change not supported from this UI for existing users. User needs to reset it or Super Admin uses Firebase console/Admin SDK.");
+                        }
+                    } else { // Adding new member
+                        // Create user in Firebase Authentication
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        const newUid = userCredential.user.uid;
+
+                        // Add user to adminUsers collection with role
+                        await addDocument('adminUsers', {
+                            userId: newUid,
+                            email: email,
+                            role: role,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    
+                    formMessage.textContent = id ? 'Member updated successfully!' : 'Member added successfully!';
+                    formMessage.className = "mt-4 text-center text-sm text-green-600";
+                    hideForm();
+                    loadMembers(); // Reload list
+                } catch (error) {
+                    console.error("Error saving member:", error);
+                    formMessage.textContent = "Failed to save member: " + error.message;
+                    formMessage.className = "mt-4 text-center text-sm text-red-500";
+                } finally {
+                    saveMemberBtn.disabled = false;
+                    saveMemberBtn.textContent = 'Save Member';
+                }
+            });
+
+            // Initial load of members
+            loadMembers();
+        });
+    </script>
+</body>
+</html>
